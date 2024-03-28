@@ -30,6 +30,17 @@ function App() {
     })
 
     const data = await response.json();
+
+    if (data.user){
+      localStorage.setItem("token", data.user);
+      alert("Login Successful");
+      window.location.href = "/feedback";
+    }
+    else{
+      alert("Login Failed");
+    }
+
+
     console.log(data);
   }
 
@@ -47,11 +58,11 @@ function App() {
           onChange={(event) => {setUsername(event.target.value)}}
         /><br/>
         <input
-          type="text"
+          type="password"
           placeholder="password"
           onChange={(event) => {setPassword(event.target.value)}}
         /><br/>
-        <button>Log In</button>
+        <button>Login</button>
       </form>
     </div>
 

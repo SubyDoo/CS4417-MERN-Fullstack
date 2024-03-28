@@ -4,7 +4,7 @@
 // useEffect hook - runs right when the site is loaded
 import {useState, useEffect} from "react";
 import Axios from "axios";
-
+import { useNavigate } from "react-router-dom";
 
 function App() {
   // const [listOfUsers, setListOfUsers] = useState([]);
@@ -72,7 +72,7 @@ function App() {
   //   </div>
   // );
 
-
+  const navigate = useNavigate();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
 
@@ -94,6 +94,14 @@ function App() {
     })
 
     const data = await response.json();
+
+    if(data.status === "ok"){
+      alert("Registration Successful");
+      navigate("/login");
+    }
+    else{
+      alert("Registration Failed");
+    }
     console.log(data);
   }
 
@@ -112,7 +120,7 @@ function App() {
           onChange={(event) => {setUsername(event.target.value)}}
         /><br/>
         <input
-          type="text"
+          type="password"
           placeholder="password"
           onChange={(event) => {setPassword(event.target.value)}}
         /><br/>

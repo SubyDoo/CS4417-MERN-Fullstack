@@ -43,11 +43,17 @@ After it is finished in the terminal type "npm install axios"
 
 In client terminal type "npm install react-router-dom"
 
+In client terminal type "npm install jsonwebtoken"
 
 start the react app, in the terminal type our created script "npm start" so that the server will refresh after any change
 
+npm install buffer
+npm install util  
+npm install crypto
 
+ npm install stream  
 
+npm install crypto-browserify
+npm install vm-browserify
 
-
-
+npm install jwt-decode 
