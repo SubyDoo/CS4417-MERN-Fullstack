@@ -12,6 +12,9 @@ axios - library that allows you to make api requests in a simple manner
 Websites: MongoDB
 Applications: MongoDB Compass
 
+References:
+https://www.youtube.com/watch?v=I7EDAR2GRVo&t=657s&ab_channel=PedroTech
+https://www.youtube.com/watch?v=Ejg7es3ba2k&ab_channel=Mehul-Codedamn 
 
 ----------Server----------
 
@@ -30,13 +33,18 @@ in the terminal go to the server folder and we want to initialize an express ser
     type "npm install express mongoose cors nodemon"
 
 
+start the server, in the terminal type our created script "npm start" so that the server will refresh after any change
 
 ----------Client----------
 
 After doing the back end open new terminal and go to the client folder
 In the terminal type "npx create-react-app ." (the . means the current directory and will create the app in this folder and not create another folder)
 After it is finished in the terminal type "npm install axios"
-in terminal type "npm start" to start the react app
+
+In client terminal type "npm install react-router-dom"
+
+
+start the react app, in the terminal type our created script "npm start" so that the server will refresh after any change
 
 
 
