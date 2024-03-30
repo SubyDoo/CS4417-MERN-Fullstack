@@ -20,7 +20,8 @@ app.use(cors())
 // This allows us to use req.body
 app.use(express.json());
 
-
+// default sanitize filter for security against cross site scripting attacks and sql injections
+mongoose.set('sanitizeFilter', true);
 
 // connect to database
 mongoose.connect("mongodb+srv://shaq:CS4417DatabasePassword@cluster0.lt6pjjn.mongodb.net/CS4417MERNAPP?retryWrites=true&w=majority&appName=Cluster0");
@@ -52,7 +53,13 @@ mongoose.connect("mongodb+srv://shaq:CS4417DatabasePassword@cluster0.lt6pjjn.mon
     }
     catch(error){
       //console.log(error)
-      res.json({status: 'error', error: 'Duplicate username'})
+      if (error.code === 11000) {
+        res.json({status: 'error', error: 'Username already exists'})
+      }
+      else {
+        res.json({status: 'error', error: 'Generic error'})
+      }
+      
     }
 
     // // data from from end
@@ -91,7 +98,7 @@ mongoose.connect("mongodb+srv://shaq:CS4417DatabasePassword@cluster0.lt6pjjn.mon
 
     try{
 
-         const decoded = jwt.verify(token, 'CS4417MERNJWTPASSWORD');
+        const decoded = jwt.verify(token, 'CS4417MERNJWTPASSWORD');
 
         console.log(decoded);
         const username = decoded.username
@@ -116,6 +123,40 @@ mongoose.connect("mongodb+srv://shaq:CS4417DatabasePassword@cluster0.lt6pjjn.mon
   });
 
 
+  
+  app.post('/updatepassword', async (req,res) =>{
+
+    const token = req.headers["x-access-token"];
+    const oldpassword = req.body.oldpassword;
+    const newpassword = req.body.newpassword;
+
+   // console.log(newpassword);
+
+    try{
+
+        const decoded = jwt.verify(token, 'CS4417MERNJWTPASSWORD');
+        const username = decoded.username;
+
+        const user = await UserModel.findOne({
+          username: username, 
+          password: oldpassword,
+      })
+
+        if (!user) {
+          return res.json({status: 'error', error: 'Incorrect Password'});
+        }
+
+        
+        await UserModel.findOneAndUpdate({username: username}, {password: newpassword})
+      
+        res.json({status: 'ok'})
+    }
+    catch(error){
+      //console.log(error)
+      res.json({status: 'error', error: 'Error changing password'})
+    }
+
+  });
 
 
 

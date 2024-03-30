@@ -56,4 +56,6 @@ npm install crypto
 npm install crypto-browserify
 npm install vm-browserify
 
+node_modules > webpack.config.js > resolve header (added some code to deal with package issues)
+
 npm install jwt-decode 

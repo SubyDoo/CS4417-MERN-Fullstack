@@ -4,14 +4,15 @@
 // useEffect hook - runs right when the site is loaded
 import {useState, useEffect} from "react";
 import Axios from "axios";
-
+import { useNavigate } from "react-router-dom";
+import { jwtDecode } from "jwt-decode";
 
 function App() {
 
 
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-
+  const[loginResponse, setLoginResponse] = useState("");
 
   async function loginUser(event){
     // prevent page from refreshing
@@ -33,42 +34,68 @@ function App() {
 
     if (data.user){
       localStorage.setItem("token", data.user);
-      alert("Login Successful");
       window.location.href = "/feedback";
     }
-    else{
-      alert("Login Failed");
+    else if (data.error === "Invalid username or password"){
+      setLoginResponse("Invalid username or password");
     }
-
-
-    console.log(data);
   }
 
 
-  return (
+  async function registerClick(){
+    window.location.href = "/register";
+  }
 
+
+  const navigate = useNavigate()
+
+  useEffect(() => {
+      const token = localStorage.getItem("token");
+      if (token) {
+          const user = jwtDecode(token)
+          if (!user) {
+              localStorage.removeItem("token");
+              navigate("/login");
+          }
+          else if (user.exp * 1000 < Date.now()) {
+              localStorage.removeItem("token");
+              navigate("/login");
+          }
+          else{
+            navigate("/feedback");
+          }
+      }
+      else{
+        localStorage.removeItem("token");
+      }
+  })
+
+
+  return (
     <div>
       <h1>
         Login
       </h1>
       <form onSubmit={loginUser}>
+      <label> Username </label><br/>
         <input 
           type="text" 
-          placeholder="username" 
-          onChange={(event) => {setUsername(event.target.value)}}
+          placeholder="type your username" 
+          onChange={(event) => {setUsername(event.target.value); setLoginResponse("")}}
         /><br/>
+        <label> Password </label><br/>
         <input
           type="password"
-          placeholder="password"
-          onChange={(event) => {setPassword(event.target.value)}}
+          placeholder="type your password"
+          onChange={(event) => {setPassword(event.target.value); setLoginResponse("")}}
         /><br/>
+        {loginResponse === "Invalid username or password" && <p style={{color: "red"}}>{loginResponse}</p>}
         <button>Login</button>
+        
       </form>
+      <button onClick={registerClick}>Register</button>
     </div>
-
-
   )
-
 }
 
 export default App;
