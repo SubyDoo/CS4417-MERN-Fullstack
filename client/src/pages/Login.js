@@ -17,7 +17,13 @@ function App() {
   async function loginUser(event){
     // prevent page from refreshing
     event.preventDefault();
-    const response = await fetch("http://localhost:3001/login", {
+
+    if(!username || !password){
+      setLoginResponse("Please enter username and password");
+    }
+
+    else{
+      const response = await fetch("http://localhost:3001/login", {
       method: "POST",
       headers: {
         'Accept': 'application/json',
@@ -30,15 +36,17 @@ function App() {
       })
     })
 
-    const data = await response.json();
+      const data = await response.json();
 
-    if (data.user){
-      localStorage.setItem("token", data.user);
-      window.location.href = "/feedback";
+      if (data.user){
+        localStorage.setItem("token", data.user);
+        window.location.href = "/feedback";
+      }
+      else if (data.error === "Invalid username or password"){
+        setLoginResponse("Invalid username or password");
+      }
     }
-    else if (data.error === "Invalid username or password"){
-      setLoginResponse("Invalid username or password");
-    }
+ 
   }
 
 
@@ -71,31 +79,34 @@ function App() {
   })
 
 
-  return (
-    <div>
-      <h1>
-        Login
-      </h1>
-      <form onSubmit={loginUser}>
-      <label> Username </label><br/>
+return (
+  <div>
+    <h1>
+      Login
+    </h1>
+    <form onSubmit={loginUser}>
+
+        <label> Username: </label><br/>
         <input 
           type="text" 
           placeholder="type your username" 
           onChange={(event) => {setUsername(event.target.value); setLoginResponse("")}}
         /><br/>
-        <label> Password </label><br/>
+
+        <label> Password: </label><br/>
         <input
           type="password"
           placeholder="type your password"
           onChange={(event) => {setPassword(event.target.value); setLoginResponse("")}}
         /><br/>
-        {loginResponse === "Invalid username or password" && <p style={{color: "red"}}>{loginResponse}</p>}
-        <button>Login</button>
-        
-      </form>
-      <button onClick={registerClick}>Register</button>
-    </div>
-  )
+
+      {loginResponse === "Invalid username or password" && <p style={{color: "red"}}>{loginResponse}</p>}
+      {loginResponse === "Please enter username and password" && <p style={{color: "red"}}>{loginResponse}</p>}
+      <button>Login</button>
+    </form>
+    <button onClick={registerClick}>Register</button>
+  </div>
+)
 }
 
 export default App;

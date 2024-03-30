@@ -32,6 +32,8 @@ in the terminal go to the server folder and we want to initialize an express ser
     type "npm init -y"
     type "npm install express mongoose cors nodemon"
 
+npm install bcrypt 
+
 
 start the server, in the terminal type our created script "npm start" so that the server will refresh after any change
 
@@ -51,7 +53,7 @@ npm install buffer
 npm install util  
 npm install crypto
 
- npm install stream  
+npm install stream  
 
 npm install crypto-browserify
 npm install vm-browserify

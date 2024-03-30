@@ -25,7 +25,7 @@ function App() {
       setFeedBackResponse("Cannot send empty feedback");
     }
 
-    else if (feedback.length > 5000){
+    else if (feedback.length >= 5000){
       setFeedBackResponse("Feedback must be less than 5000 characters");
     }
 
@@ -41,17 +41,23 @@ function App() {
       body: JSON.stringify({
         feedbacktext: feedback
       })
-    })
+      })
 
-    const data = await response.json();
+      const data = await response.json();
 
-    if (data.status === "ok"){
-      setFeedBackResponse("Thank you for your feedback");
-    }
+      if (data.status === "ok"){
+        setFeedBackResponse("Thank you for your feedback");
+      }
+      else if (data.error === "Cannot send empty feedback"){
+        setFeedBackResponse("Cannot send empty feedback");
+      }
+      else if (data.error === "Feedback must be less than 5000 characters"){
+        setFeedBackResponse("Feedback must be less than 5000 characters");
+      }
 
-    // this reset the text in the form
-    setFeedback("");
-    //console.log(data);
+      // this reset the text in the form
+      setFeedback("");
+      //console.log(data);
     }
     
   }
@@ -87,7 +93,7 @@ function App() {
         Feedback Form
       </h1>
       <form onSubmit={sendFeedback}>
-        <input 
+        <textarea 
           type="text" 
           placeholder="please enter some feedback" 
           onChange={(event) => {setFeedback(event.target.value); setFeedBackResponse("");}}
@@ -100,9 +106,7 @@ function App() {
       </form>
     </div>
 
-
   )
-
 }
 
 export default App;

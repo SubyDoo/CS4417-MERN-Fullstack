@@ -7,10 +7,13 @@ const mongoose = require("mongoose")
 const UserModel = require("./models/Users")
 const FeedbackModel = require("./models/Feedback")
 
+
 // allow you to connect this api to the react front end
 const cors = require("cors")
 
 const jwt = require("jsonwebtoken");
+
+const bcrypt = require("bcrypt")
 
 // issue not loading list of users, had to add this https://stackoverflow.com/questions/45975135/access-control-origin-header-error-using-axios 
 // this allows the front end to access the api as the middleware
@@ -20,71 +23,72 @@ app.use(cors())
 // This allows us to use req.body
 app.use(express.json());
 
-// default sanitize filter for security against cross site scripting attacks and sql injections
+// default sanitize filter for security against nosSQL injections
+// The sanitize function will strip out any keys that start with '$' in the input
 mongoose.set('sanitizeFilter', true);
 
 // connect to database
 mongoose.connect("mongodb+srv://shaq:CS4417DatabasePassword@cluster0.lt6pjjn.mongodb.net/CS4417MERNAPP?retryWrites=true&w=majority&appName=Cluster0");
 
-///////////// No Longer Works find method no longer accepts callback
-// req - get info from front end
-// res - send info from back end to front end
-  // app.get('/getUsers',(req,res) => {
-  //   //res.header("Access-Control-Allow-Origin", "*");
-  //   UserModel.find({}).then(
-  //     result => res.json(result)
-  //   ).catch(
-  //     err => {throw err}
-  //   );
-  // });  
-
-  app.get('/hello', (req, res) =>{
-    res.send('Hello World')
-  })
-
 
   app.post('/register', async (req,res) =>{
-    try{
-        await UserModel.create({
-        username: req.body.username,
-        password: req.body.password
-      })
-      res.json({status: 'ok'})
-    }
-    catch(error){
-      //console.log(error)
-      if (error.code === 11000) {
-        res.json({status: 'error', error: 'Username already exists'})
-      }
-      else {
-        res.json({status: 'error', error: 'Generic error'})
-      }
-      
+
+    if (!req.body.username || !req.body.password) {
+      return res.json({status: 'error', error: 'Please enter username and password'})
     }
 
-    // // data from from end
-    // const user = req.body
-    // const newUser = new UserModel(user)
-    // await newUser.save()
-    //
+    else if (req.body.password.length < 8 || req.body.password.length > 16) {
+      return res.json({status: 'error', error: 'Password must be between 8 and 16 characters'})
+    }
+
+    else{
+      
+
+      try{
+
+        const hash = await bcrypt.hash(req.body.password, 10);
+        await UserModel.create({
+        username: req.body.username,
+        password: hash
+        })
+        res.json({status: 'ok'})
+      }
+      catch(error){
+        if (error.code === 11000) {
+          res.json({status: 'error', error: 'Username already exists'})
+        }
+        else {
+          res.json({status: 'error', error: 'Generic error'})
+        }
+      }
+    }
+
   });
 
   app.post('/login', async (req,res) =>{
 
-        const user = await UserModel.findOne({
-          username: req.body.username, 
-          password: req.body.password,
+      const user = await UserModel.findOne({
+        username: req.body.username, 
       })
 
       if (user) {
-
-        const token = jwt.sign(
-          { 
-            username: user.username 
-          }, 
-          'CS4417MERNJWTPASSWORD');
-        res.json({status: 'ok', user: token})
-      } else {
+        bcrypt.compare(req.body.password, user.password, function(err, result) {
+          if(err) {
+            return res.json({status: 'error', error: 'Invalid username or password'})
+          }
+          if(result) {
+            const token = jwt.sign(
+              { 
+                username: user.username 
+              }, 
+              'CS4417MERNJWTPASSWORD');
+            res.json({status: 'ok', user: token})
+          } else {
+            res.json({status: 'error', error: 'Invalid username or password'})
+          }
+        })
+      }
+      else {
         res.json({status: 'error', error: 'Invalid username or password', user: false})
       }
 
@@ -99,14 +103,19 @@ mongoose.connect("mongodb+srv://shaq:CS4417DatabasePassword@cluster0.lt6pjjn.mon
     try{
 
         const decoded = jwt.verify(token, 'CS4417MERNJWTPASSWORD');
-
-        console.log(decoded);
         const username = decoded.username
-        console.log(username);
         const user = await UserModel.findOne({username: username})
 
         if (!user) {
           return res.json({status: 'error', error: 'Invalid token'})
+        }
+
+        if (!req.body.feedbacktext) {
+          return res.json({status: 'error', error: 'Cannot send empty feedback'})
+        }
+
+        if (req.body.feedbacktext.length >= 5000) {
+          return res.json({status: 'error', error: 'Feedback must be less than 5000 characters'})
         }
 
         await FeedbackModel.create({

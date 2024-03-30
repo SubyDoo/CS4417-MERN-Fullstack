@@ -56,6 +56,12 @@ function App() {
         if(data.error === "Username already exists"){
           setUsernameError(data.error);
         }
+        else if(data.error === "Please enter username"){
+          setUsernameError(data.error);
+        }
+        else if(data.error === "Password must be between 8-16 characters"){
+          setPasswordError(data.error);
+        }
       }
       console.log(data);
     }
