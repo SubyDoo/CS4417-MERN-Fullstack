@@ -32,7 +32,7 @@ function App() {
     }
 
     else{
-      const response = await fetch("http://localhost:3001/register", {
+      const response = await fetch("https://localhost:3001/register", {
         method: "POST",
         headers: {
           'Accept': 'application/json',

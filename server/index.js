@@ -15,6 +15,12 @@ const jwt = require("jsonwebtoken");
 
 const bcrypt = require("bcrypt")
 
+const https = require("https")
+const path = require("path")
+const fs = require("fs")
+
+require('dotenv').config();
+
 // issue not loading list of users, had to add this https://stackoverflow.com/questions/45975135/access-control-origin-header-error-using-axios 
 // this allows the front end to access the api as the middleware
 app.use(cors())
@@ -27,8 +33,11 @@ app.use(express.json());
 // The sanitize function will strip out any keys that start with '$' in the input
 mongoose.set('sanitizeFilter', true);
 
+const dbUsername = process.env.DB_USERNAME;
+const dbPassword = process.env.DB_PASSWORD;
+const jwtTokenSecret = process.env.JWT_TOKEN_SECRET;
 // connect to database
-mongoose.connect("mongodb+srv://shaq:CS4417DatabasePassword@cluster0.lt6pjjn.mongodb.net/CS4417MERNAPP?retryWrites=true&w=majority&appName=Cluster0");
+mongoose.connect("mongodb+srv://" + dbUsername + ":" + dbPassword + "@cluster0.lt6pjjn.mongodb.net/CS4417MERNAPP?retryWrites=true&w=majority&appName=Cluster0");
 
 
   app.post('/register', async (req,res) =>{
@@ -67,6 +76,9 @@ mongoose.connect("mongodb+srv://shaq:CS4417DatabasePassword@cluster0.lt6pjjn.mon
 
   app.post('/login', async (req,res) =>{
 
+
+    try { 
+
       const user = await UserModel.findOne({
         username: req.body.username, 
       })
@@ -81,7 +93,7 @@ mongoose.connect("mongodb+srv://shaq:CS4417DatabasePassword@cluster0.lt6pjjn.mon
               { 
                 username: user.username 
               }, 
-              'CS4417MERNJWTPASSWORD');
+              jwtTokenSecret);
             res.json({status: 'ok', user: token})
           } else {
             res.json({status: 'error', error: 'Invalid username or password'})
@@ -91,6 +103,10 @@ mongoose.connect("mongodb+srv://shaq:CS4417DatabasePassword@cluster0.lt6pjjn.mon
       else {
         res.json({status: 'error', error: 'Invalid username or password', user: false})
       }
+    } 
+    catch(error) {
+      res.json({status: 'error', error: 'Error logging in', user: false})
+    }
 
   });
 
@@ -98,11 +114,10 @@ mongoose.connect("mongodb+srv://shaq:CS4417DatabasePassword@cluster0.lt6pjjn.mon
   app.post('/sendfeedback', async (req,res) =>{
 
     const token = req.headers["x-access-token"];
-    console.log("test");
 
     try{
 
-        const decoded = jwt.verify(token, 'CS4417MERNJWTPASSWORD');
+        const decoded = jwt.verify(token, jwtTokenSecret);
         const username = decoded.username
         const user = await UserModel.findOne({username: username})
 
@@ -125,7 +140,6 @@ mongoose.connect("mongodb+srv://shaq:CS4417DatabasePassword@cluster0.lt6pjjn.mon
       res.json({status: 'ok'})
     }
     catch(error){
-      //console.log(error)
       res.json({status: 'error', error: 'Error sending feedback'})
     }
 
@@ -143,22 +157,33 @@ mongoose.connect("mongodb+srv://shaq:CS4417DatabasePassword@cluster0.lt6pjjn.mon
 
     try{
 
-        const decoded = jwt.verify(token, 'CS4417MERNJWTPASSWORD');
+        const decoded = jwt.verify(token, jwtTokenSecret);
         const username = decoded.username;
 
         const user = await UserModel.findOne({
-          username: username, 
-          password: oldpassword,
-      })
+          username: username
+        })
 
-        if (!user) {
+        if (user){
+          bcrypt.compare(oldpassword, user.password, async function(err, result) {
+            if(err) {
+              return res.json({status: 'error', error: 'Incorrect Password'})
+            }
+            if(result) {
+              
+              const hash = await bcrypt.hash(newpassword, 10);
+              await UserModel.findOneAndUpdate({username: username}, {password: hash})
+              return res.json({status: 'ok'})
+            }
+          })
+        }
+
+        else {
           return res.json({status: 'error', error: 'Incorrect Password'});
         }
 
         
-        await UserModel.findOneAndUpdate({username: username}, {password: newpassword})
-      
-        res.json({status: 'ok'})
+        
     }
     catch(error){
       //console.log(error)
@@ -167,11 +192,20 @@ mongoose.connect("mongodb+srv://shaq:CS4417DatabasePassword@cluster0.lt6pjjn.mon
 
   });
 
+// HTTP
+// // tell api to start, 3001 port number, react will start at port 3000
+// app.listen(3001, () =>{
+//     console.log("Server started on port 3001") 
+// })
 
+// HTTPS
+const sslServer = https.createServer(
+  {
+  key: fs.readFileSync(path.join(__dirname, 'cert/key.pem')),
+  cert: fs.readFileSync(path.join(__dirname, 'cert/cert.pem')),
+  }, 
+  app)
 
-
-
-// tell api to start, 3001 port number, react will start at port 3000
-app.listen(3001, () =>{
-    console.log("Server started on port 3001") 
+sslServer.listen(3001, () =>{
+  console.log("HTTPS Server started on port 3001") 
 })

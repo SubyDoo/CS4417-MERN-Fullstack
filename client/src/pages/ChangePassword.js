@@ -44,7 +44,7 @@ function App() {
 
     else if(newpassword === confirmpassword){
         
-        const response = await fetch("http://localhost:3001/updatepassword", {
+        const response = await fetch("https://localhost:3001/updatepassword", {
             method: "POST",
             headers: {
               'Accept': 'application/json',

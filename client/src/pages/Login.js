@@ -23,7 +23,7 @@ function App() {
     }
 
     else{
-      const response = await fetch("http://localhost:3001/login", {
+      const response = await fetch("https://localhost:3001/login", {
       method: "POST",
       headers: {
         'Accept': 'application/json',
@@ -104,7 +104,7 @@ return (
       {loginResponse === "Please enter username and password" && <p style={{color: "red"}}>{loginResponse}</p>}
       <button>Login</button>
     </form>
-    <button onClick={registerClick}>Register</button>
+    <button onClick={registerClick}>Click here to go register an account</button>
   </div>
 )
 }

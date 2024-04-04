@@ -61,3 +61,26 @@ npm install vm-browserify
 node_modules > webpack.config.js > resolve header (added some code to deal with package issues)
 
 npm install jwt-decode 
+
+
+
+----------------- HTTPS ---------------------------
+
+installed openssl
+1. Generate privat key
+2. Create a certificate signing request using private key (CSR)
+3. Generate SSL certificate from CSR
+
+Terminal in cert folder type "openssl genrsa -out key.pem"
+then type "openssl req -new -key key.pem -out csr.pem"
+finally type "openssl x509 -req -days 365 -in csr.pem -signkey key.pem -out cert.pem"
+
+
+
+
+
+-------------Environment Variables to store DB credentials---------------
+
+npm install dotenv
+create .env file
+type global varables
