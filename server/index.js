@@ -12,16 +12,14 @@ const FeedbackModel = require("./models/Feedback")
 const cors = require("cors")
 
 const jwt = require("jsonwebtoken");
-
 const bcrypt = require("bcrypt")
-
 const https = require("https")
 const path = require("path")
 const fs = require("fs")
 
+// read .env file
 require('dotenv').config();
 
-// issue not loading list of users, had to add this https://stackoverflow.com/questions/45975135/access-control-origin-header-error-using-axios 
 // this allows the front end to access the api as the middleware
 app.use(cors())
 
@@ -36,161 +34,182 @@ mongoose.set('sanitizeFilter', true);
 const dbUsername = process.env.DB_USERNAME;
 const dbPassword = process.env.DB_PASSWORD;
 const jwtTokenSecret = process.env.JWT_TOKEN_SECRET;
+
 // connect to database
 mongoose.connect("mongodb+srv://" + dbUsername + ":" + dbPassword + "@cluster0.lt6pjjn.mongodb.net/CS4417MERNAPP?retryWrites=true&w=majority&appName=Cluster0");
 
+// api to register a new user
+app.post('/register', async (req,res) =>{
 
-  app.post('/register', async (req,res) =>{
+  // check if all fields are filled
+  if (!req.body.username || !req.body.password) {
+    return res.json({status: 'error', error: 'Please enter username and password'})
+  }
 
-    if (!req.body.username || !req.body.password) {
-      return res.json({status: 'error', error: 'Please enter username and password'})
-    }
+  // check if password is between 8-16 characters
+  else if (req.body.password.length < 8 || req.body.password.length > 16) {
+    return res.json({status: 'error', error: 'Password must be between 8 and 16 characters'})
+  }
 
-    else if (req.body.password.length < 8 || req.body.password.length > 16) {
-      return res.json({status: 'error', error: 'Password must be between 8 and 16 characters'})
-    }
-
-    else{
-      
-
-      try{
-
-        const hash = await bcrypt.hash(req.body.password, 10);
-        await UserModel.create({
-        username: req.body.username,
-        password: hash
-        })
-        res.json({status: 'ok'})
-      }
-      catch(error){
-        if (error.code === 11000) {
-          res.json({status: 'error', error: 'Username already exists'})
-        }
-        else {
-          res.json({status: 'error', error: 'Generic error'})
-        }
-      }
-    }
-
-  });
-
-  app.post('/login', async (req,res) =>{
-
-
-    try { 
-
-      const user = await UserModel.findOne({
-        username: req.body.username, 
-      })
-
-      if (user) {
-        bcrypt.compare(req.body.password, user.password, function(err, result) {
-          if(err) {
-            return res.json({status: 'error', error: 'Invalid username or password'})
-          }
-          if(result) {
-            const token = jwt.sign(
-              { 
-                username: user.username 
-              }, 
-              jwtTokenSecret);
-            res.json({status: 'ok', user: token})
-          } else {
-            res.json({status: 'error', error: 'Invalid username or password'})
-          }
-        })
-      }
-      else {
-        res.json({status: 'error', error: 'Invalid username or password', user: false})
-      }
-    } 
-    catch(error) {
-      res.json({status: 'error', error: 'Error logging in', user: false})
-    }
-
-  });
-
-
-  app.post('/sendfeedback', async (req,res) =>{
-
-    const token = req.headers["x-access-token"];
-
+  // attempt to register user
+  else{
     try{
-
-        const decoded = jwt.verify(token, jwtTokenSecret);
-        const username = decoded.username
-        const user = await UserModel.findOne({username: username})
-
-        if (!user) {
-          return res.json({status: 'error', error: 'Invalid token'})
-        }
-
-        if (!req.body.feedbacktext) {
-          return res.json({status: 'error', error: 'Cannot send empty feedback'})
-        }
-
-        if (req.body.feedbacktext.length >= 5000) {
-          return res.json({status: 'error', error: 'Feedback must be less than 5000 characters'})
-        }
-
-        await FeedbackModel.create({
-        username: username,
-        feedback: req.body.feedbacktext
+      const hash = await bcrypt.hash(req.body.password, 10);
+      await UserModel.create({
+      username: req.body.username,
+      password: hash
       })
       res.json({status: 'ok'})
     }
     catch(error){
-      res.json({status: 'error', error: 'Error sending feedback'})
+      if (error.code === 11000) {
+        res.json({status: 'error', error: 'Username already exists'})
+      }
+      else {
+        res.json({status: 'error', error: 'Generic error'})
+      }
+    }
+  }
+});
+
+// api to login
+app.post('/login', async (req,res) =>{
+
+  try { 
+    const user = await UserModel.findOne({
+      username: req.body.username, 
+    })
+
+    // check if user exists
+    if (user) {
+      bcrypt.compare(req.body.password, user.password, function(err, result) {
+        if(err) {
+          return res.json({status: 'error', error: 'Invalid username or password'})
+        }
+        if(result) {
+          const token = jwt.sign(
+            { 
+              username: user.username 
+            }, 
+            jwtTokenSecret);
+          res.json({status: 'ok', user: token})
+        } else {
+          res.json({status: 'error', error: 'Invalid username or password'})
+        }
+      })
+    }
+    else {
+      res.json({status: 'error', error: 'Invalid username or password', user: false})
+    }
+  } 
+  catch(error) {
+    res.json({status: 'error', error: 'Error logging in', user: false})
+  }
+});
+
+// api to send feedback
+app.post('/sendfeedback', async (req,res) =>{
+
+  // header for token
+  const token = req.headers["x-access-token"];
+
+  try{
+    const decoded = jwt.verify(token, jwtTokenSecret);
+    const username = decoded.username
+    // find user
+    const user = await UserModel.findOne({username: username})
+
+    // check if user exists
+    if (!user) {
+      return res.json({status: 'error', error: 'Invalid token'})
     }
 
-  });
+    // check if feedback is empty
+    if (!req.body.feedbacktext) {
+      return res.json({status: 'error', error: 'Cannot send empty feedback'})
+    }
+
+    // check if feedback is too long
+    if (req.body.feedbacktext.length >= 5000) {
+      return res.json({status: 'error', error: 'Feedback must be less than 5000 characters'})
+    }
+
+    // attempt to create feedback in database
+    await FeedbackModel.create({
+      username: username,
+      feedback: req.body.feedbacktext
+    })
+    res.json({status: 'ok'})
+  }
+  catch(error){
+    res.json({status: 'error', error: 'Error sending feedback'})
+  }
+});
 
 
-  
-  app.post('/updatepassword', async (req,res) =>{
+// api to update password
+app.post('/updatepassword', async (req,res) =>{
 
-    const token = req.headers["x-access-token"];
-    const oldpassword = req.body.oldpassword;
-    const newpassword = req.body.newpassword;
+  // header for token
+  const token = req.headers["x-access-token"];
 
-   // console.log(newpassword);
+  const oldpassword = req.body.oldpassword;
+  const newpassword = req.body.newpassword;
+  const confirmpassword = req.body.confirmpassword;
 
+  // check if all fields are filled
+  if (!oldpassword || !newpassword || !confirmpassword) {
+    return res.json({status: 'error', error: 'Please enter all fields'})
+  }
+
+  // check if password is between 8-16 characters
+  else if (newpassword.length < 8 || newpassword.length > 16) {
+    return res.json({status: 'error', error: 'Password must be between 8-16 characters'})
+  }
+
+  // check if new password and confirm password match
+  else if (newpassword !== confirmpassword) {
+    return res.json({status: 'error', error: 'New password and confirm passwords do not match'})
+  }
+
+  // check if all field are filled
+  else if (oldpassword && newpassword && confirmpassword) {
     try{
-
-        const decoded = jwt.verify(token, jwtTokenSecret);
-        const username = decoded.username;
-
-        const user = await UserModel.findOne({
-          username: username
+      const decoded = jwt.verify(token, jwtTokenSecret);
+      const username = decoded.username;
+  
+      // find user
+      const user = await UserModel.findOne({
+        username: username
+      })
+  
+      // check if user exists
+      if (user){
+        bcrypt.compare(oldpassword, user.password, async function(err, result) {
+          if(err) {
+            return res.json({status: 'error', error: 'Incorrect Password'})
+          }
+          if(result) {
+            // hash password
+            const hash = await bcrypt.hash(newpassword, 10);
+            // update password
+            await UserModel.findOneAndUpdate({username: username}, {password: hash})
+            return res.json({status: 'ok'})
+            
+          } else {
+            return res.json({status: 'error', error: 'Incorrect Password'})
+          }
         })
-
-        if (user){
-          bcrypt.compare(oldpassword, user.password, async function(err, result) {
-            if(err) {
-              return res.json({status: 'error', error: 'Incorrect Password'})
-            }
-            if(result) {
-              
-              const hash = await bcrypt.hash(newpassword, 10);
-              await UserModel.findOneAndUpdate({username: username}, {password: hash})
-              return res.json({status: 'ok'})
-            }
-          })
-        }
-
-        else {
-          return res.json({status: 'error', error: 'Incorrect Password'});
-        }
-
-        
-        
+      }
+      else {
+        return res.json({status: 'error', error: 'Incorrect Password'});
+      }
     }
     catch(error){
-      //console.log(error)
-      res.json({status: 'error', error: 'Error changing password'})
+      return res.json({status: 'error', error: 'Error changing password'})
     }
-
-  });
+  }
+});
 
 // HTTP
 // // tell api to start, 3001 port number, react will start at port 3000

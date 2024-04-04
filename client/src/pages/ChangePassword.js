@@ -3,107 +3,105 @@
 // useState hook - rerenders template when a reactive value is updated
 // useEffect hook - runs right when the site is loaded
 import {useState, useEffect} from "react";
-import Axios from "axios";
-//import jwt from "jsonwebtoken";
 import { jwtDecode } from "jwt-decode";
 import { useNavigate } from "react-router-dom";
 import NavBar from "./Navbar"; 
 
 function App() {
-
   
- const navigate = useNavigate()
+  // allow to navigate to another page
+  const navigate = useNavigate()
 
+  // these states are for the change password form
+  const [oldpassword, setOldPassword] = useState(""); 
+  const [newpassword, setNewPassword] = useState("");
+  const [confirmpassword, setConfirmPassword] = useState("");
+  // this state is for the change password response
+  const[changePasswordResponse, setChangePasswordResponse] = useState("");
 
-
- const [oldpassword, setOldPassword] = useState(""); 
- const [newpassword, setNewPassword] = useState("");
- const [confirmpassword, setConfirmPassword] = useState("");
- const[changePasswordResponse, setChangePasswordResponse] = useState("");
-
-
- async function changePassword(event){
+  // change password function
+  async function changePassword(event){
 
     // prevent page from refreshing
     event.preventDefault();
-
+    // reset the change password response
     setChangePasswordResponse("");
 
-
+    // check if all fields are filled
     if(!oldpassword || !newpassword || !confirmpassword){
-        setChangePasswordResponse("Please enter all fields");
+      setChangePasswordResponse("Please enter all fields");
     }
 
+    // check if password is between 8-16 characters
     else if (newpassword.length < 8 || newpassword.length > 16){
-        setChangePasswordResponse("Password must be between 8-16 characters");
+      setChangePasswordResponse("Password must be between 8-16 characters");
     }
 
+    // check if new password and confirm password match
     else if (newpassword !== confirmpassword){
-        setChangePasswordResponse("New password and confirm passwords do not match");
+      setChangePasswordResponse("New password and confirm passwords do not match");
     }
 
+    // check if new password and confirm password match
     else if(newpassword === confirmpassword){
         
-        const response = await fetch("https://localhost:3001/updatepassword", {
-            method: "POST",
-            headers: {
-              'Accept': 'application/json',
-              // telling the server we are sending JSON
-              'Content-Type': 'application/json',
-              'x-access-token': localStorage.getItem("token")
-            },
-            body: JSON.stringify({
-              oldpassword: oldpassword,
-              newpassword: newpassword
-            })
-          })
-          
-            const data = await response.json();
-            
-            //console.log(data);
-
-            if (data.status === "ok"){
-            setChangePasswordResponse("Password Changed");
-            }
+      // send request to server to change password
+      const response = await fetch("https://localhost:3001/updatepassword", {
+        method: "POST",
+        headers: {
+          'Accept': 'application/json',
+          // telling the server we are sending JSON
+          'Content-Type': 'application/json',
+          'x-access-token': localStorage.getItem("token")
+        },
+        body: JSON.stringify({
+          oldpassword: oldpassword,
+          newpassword: newpassword,
+          confirmpassword: confirmpassword
+        })
+      })
         
+      // get response
+      const data = await response.json();
 
-            else if (data.status === "error"){
-            if(data.error === "Incorrect Password"){
-                setChangePasswordResponse("Incorrect Password");
-            }
-            }
-            else {
-            setChangePasswordResponse("Password Change Failed");
-        }
-    }
-    
- }
-
-
-
-
-  useEffect(() => {
-      const token = localStorage.getItem("token");
-      if (token) {
-          const user = jwtDecode(token)
-          if (!user) {
-              localStorage.removeItem("token");
-              navigate("/login");
-          }
-          else if (user.exp * 1000 < Date.now()) {
-              localStorage.removeItem("token");
-              navigate("/login");
-          }
+      if (data.status === "ok"){
+        setChangePasswordResponse("Password Changed");
       }
-      else{
+
+      else if (data.status === "error"){
+        if(data.error === "Incorrect Password"){
+          setChangePasswordResponse("Incorrect Password");
+        }
+      }
+
+      else {
+        setChangePasswordResponse("Password Change Failed");
+      }
+    }  
+  }
+
+  // check if user is logged in, if not, redirect to login
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      const user = jwtDecode(token)
+      if (!user) {
         localStorage.removeItem("token");
         navigate("/login");
       }
+      else if (user.exp * 1000 < Date.now()) {
+        localStorage.removeItem("token");
+        navigate("/login");
+      }
+    }
+    else{
+      localStorage.removeItem("token");
+      navigate("/login");
+    }
   })
 
 
   return (
-
     <div>
       <NavBar/>
       <h1>
@@ -122,8 +120,8 @@ function App() {
         {changePasswordResponse === "New password and confirm passwords do not match" && <p style={{color: "red"}}>{changePasswordResponse}</p>}
         {changePasswordResponse === "Incorrect Password" && <p style={{color: "red"}}>{changePasswordResponse}</p>}
         {changePasswordResponse === "Password Change Failed" && <p style={{color: "red"}}>{changePasswordResponse}</p>}
-        <input type="submit" value="Click to change password" />
-    </form>
+        <button>Click to change password</button>
+      </form>
     </div>
   )
 }

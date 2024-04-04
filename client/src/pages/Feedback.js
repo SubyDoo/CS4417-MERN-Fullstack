@@ -3,46 +3,54 @@
 // useState hook - rerenders template when a reactive value is updated
 // useEffect hook - runs right when the site is loaded
 import {useState, useEffect} from "react";
-import Axios from "axios";
-//import jwt from "jsonwebtoken";
 import { jwtDecode } from "jwt-decode";
 import { useNavigate } from "react-router-dom";
 import NavBar from "./Navbar";  
 
 function App() {
 
+  // allow to navigate to another page
+  const navigate = useNavigate()
 
+  // this state is for the feedback form
   const [feedback, setFeedback] = useState("");
+  // this state is for the feedback response
   const[feedbackResponse, setFeedBackResponse] = useState("");
 
+  // this function sends the feedback
   async function sendFeedback(event){
+
     // prevent page from refreshing
     event.preventDefault();
-
+    // reset the feedback response
     setFeedBackResponse("");
 
+    // check if feedback is empty
     if(!feedback){
       setFeedBackResponse("Cannot send empty feedback");
     }
 
+    // check if feedback is 5000 characters or less
     else if (feedback.length >= 5000){
       setFeedBackResponse("Feedback must be less than 5000 characters");
     }
 
+    // send request to server to send feedback
     else{
       const response = await fetch("https://localhost:3001/sendfeedback", {
-      method: "POST",
-      headers: {
-        'Accept': 'application/json',
-        // telling the server we are sending JSON
-        'Content-Type': 'application/json',
-        'x-access-token': localStorage.getItem("token")
-      },
-      body: JSON.stringify({
-        feedbacktext: feedback
-      })
+        method: "POST",
+        headers: {
+          'Accept': 'application/json',
+          // telling the server we are sending JSON
+          'Content-Type': 'application/json',
+          'x-access-token': localStorage.getItem("token")
+        },
+        body: JSON.stringify({
+          feedbacktext: feedback
+        })
       })
 
+      // get response
       const data = await response.json();
 
       if (data.status === "ok"){
@@ -55,38 +63,33 @@ function App() {
         setFeedBackResponse("Feedback must be less than 5000 characters");
       }
 
-      // this reset the text in the form
+      // this resets the text in the form
       setFeedback("");
-      //console.log(data);
     }
-    
   }
-
   
- const navigate = useNavigate()
-
+  // check if user is logged in, if not, redirect to login
   useEffect(() => {
-      const token = localStorage.getItem("token");
-      if (token) {
-          const user = jwtDecode(token)
-          if (!user) {
-              localStorage.removeItem("token");
-              navigate("/login");
-          }
-          else if (user.exp * 1000 < Date.now()) {
-              localStorage.removeItem("token");
-              navigate("/login");
-          }
-      }
-      else{
+    const token = localStorage.getItem("token");
+    if (token) {
+      const user = jwtDecode(token)
+      if (!user) {
         localStorage.removeItem("token");
         navigate("/login");
       }
+      else if (user.exp * 1000 < Date.now()) {
+        localStorage.removeItem("token");
+        navigate("/login");
+      }
+    }
+    else{
+      localStorage.removeItem("token");
+      navigate("/login");
+    }
   })
 
 
   return (
-    
     <div>
       <NavBar/>
       <h1>
@@ -105,7 +108,6 @@ function App() {
         <button>Send Feedback</button>
       </form>
     </div>
-
   )
 }
 

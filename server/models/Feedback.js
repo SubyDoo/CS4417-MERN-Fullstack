@@ -1,7 +1,7 @@
-// how the Users "table" should be formatted
 
 const mongoose = require("mongoose")
 
+// how the Users "table" should be formatted
 const FeedbackScheme = new mongoose.Schema(
     {
         username:{
@@ -16,10 +16,8 @@ const FeedbackScheme = new mongoose.Schema(
     {collection: "feedback"}
 );
 
-
 // create a model out the schema
-
 const FeedbackModel = mongoose.model("feedback", FeedbackScheme)
 
-//export to outside of this file so you have access to the model to make changes throughout the application
+// export to outside of this file so you have access to the model to make changes throughout the application
 module.exports = FeedbackModel;

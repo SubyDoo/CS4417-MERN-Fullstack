@@ -6,8 +6,8 @@ import Register from "./pages/Register";
 import Feedback from "./pages/Feedback";
 import Lost from "./pages/Lost";
 import ChangePassword from "./pages/ChangePassword";
-import NavBar from "./pages/Navbar"
 
+// this is the main application
 const App = () => {
     return (
         <div>
@@ -22,7 +22,6 @@ const App = () => {
                 </Routes>
             </BrowserRouter>
         </div>
-
     )
 }
 

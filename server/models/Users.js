@@ -1,7 +1,7 @@
-// how the Users "table" should be formatted
 
 const mongoose = require("mongoose")
 
+// how the Users "table" should be formatted
 const UserScheme = new mongoose.Schema(
     {
         username:{
@@ -17,9 +17,7 @@ const UserScheme = new mongoose.Schema(
     {collection: "users"}
 );
 
-
 // create a model out the schema
-
 const UserModel = mongoose.model("users", UserScheme)
 
 //export to outside of this file so you have access to the model to make changes throughout the application
