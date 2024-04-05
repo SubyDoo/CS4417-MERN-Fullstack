@@ -21,7 +21,8 @@ const fs = require("fs")
 require('dotenv').config();
 
 // this allows the front end to access the api as the middleware
-app.use(cors())
+// origin is the url of the front end
+app.use(cors({origin: 'https://localhost:3000'}, {methods: ['POST']}));
 
 // allows to parse json in the body of a request
 // This allows us to use req.body
@@ -54,9 +55,10 @@ app.post('/register', async (req,res) =>{
   // attempt to register user
   else{
     try{
+      const userName = req.body.username;
       const hash = await bcrypt.hash(req.body.password, 10);
       await UserModel.create({
-      username: req.body.username,
+      username: userName,
       password: hash
       })
       res.json({status: 'ok'})
@@ -75,10 +77,11 @@ app.post('/register', async (req,res) =>{
 // api to login
 app.post('/login', async (req,res) =>{
 
+  
   try { 
-    const user = await UserModel.findOne({
-      username: req.body.username, 
-    })
+
+    const userName = req.body.username;
+    const user = await UserModel.findOne({username: userName})
 
     // check if user exists
     if (user) {
@@ -91,6 +94,9 @@ app.post('/login', async (req,res) =>{
             { 
               username: user.username 
             }, 
+            {
+              expiresIn: '1h'
+            },
             jwtTokenSecret);
           res.json({status: 'ok', user: token})
         } else {
