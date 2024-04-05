@@ -94,10 +94,11 @@ app.post('/login', async (req,res) =>{
             { 
               username: user.username 
             }, 
+            jwtTokenSecret,
             {
               expiresIn: '1h'
-            },
-            jwtTokenSecret);
+            }
+            );
           res.json({status: 'ok', user: token})
         } else {
           res.json({status: 'error', error: 'Invalid username or password'})

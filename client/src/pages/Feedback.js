@@ -77,7 +77,7 @@ function App() {
         localStorage.removeItem("token");
         navigate("/login");
       }
-      else if (user.exp < Date.now()) {
+      else if (user.exp * 1000 < Date.now()) {
         localStorage.removeItem("token");
         navigate("/login");
       }
