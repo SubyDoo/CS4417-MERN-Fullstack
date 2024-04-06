@@ -17,6 +17,7 @@ function App() {
   const [newpassword, setNewPassword] = useState("");
   const [confirmpassword, setConfirmPassword] = useState("");
   // this state is for the change password response
+  const[changePasswordResponseError, setChangePasswordResponseError] = useState("");
   const[changePasswordResponse, setChangePasswordResponse] = useState("");
 
   // change password function
@@ -26,20 +27,25 @@ function App() {
     event.preventDefault();
     // reset the change password response
     setChangePasswordResponse("");
+    setChangePasswordResponseError("");
 
     // check if all fields are filled
     if(!oldpassword || !newpassword || !confirmpassword){
-      setChangePasswordResponse("Please enter all fields");
+      setChangePasswordResponseError("Please enter all fields");
     }
 
     // check if password is between 8-16 characters
     else if (newpassword.length < 8 || newpassword.length > 16){
-      setChangePasswordResponse("Password must be between 8-16 characters");
+      setChangePasswordResponseError("Password must be between 8-16 characters");
+    }
+
+    else if (newpassword.search(/[0-9]/) < 0 || newpassword.search(/[a-z]/) < 0 || newpassword.search(/[A-Z]/) < 0 || newpassword.search(/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/) < 0){
+      setChangePasswordResponseError("Password must contain at least one number, one lowercase, one uppercase character, and one special character");
     }
 
     // check if new password and confirm password match
     else if (newpassword !== confirmpassword){
-      setChangePasswordResponse("New password and confirm passwords do not match");
+      setChangePasswordResponseError("New password and confirm passwords do not match");
     }
 
     // check if new password and confirm password match
@@ -70,12 +76,12 @@ function App() {
 
       else if (data.status === "error"){
         if(data.error === "Incorrect Password"){
-          setChangePasswordResponse("Incorrect Password");
+          setChangePasswordResponseError("Incorrect Password");
         }
       }
 
       else {
-        setChangePasswordResponse("Password Change Failed");
+        setChangePasswordResponseError("Password Change Failed");
       }
     }  
   }
@@ -114,12 +120,8 @@ function App() {
         <input type="password" name="newpassword" onChange={(event) => {setNewPassword(event.target.value)}}/><br/>
         <label> Confirm New Password </label><br/>
         <input type="password" name="newpasswordconfirm" onChange={(event) => {setConfirmPassword(event.target.value)}}/><br/>
-        {changePasswordResponse === "Password Changed" && <p style={{color: "green"}}>{changePasswordResponse}</p>}
-        {changePasswordResponse === "Please enter all fields" && <p style={{color: "red"}}>{changePasswordResponse}</p>}
-        {changePasswordResponse === "Password must be between 8-16 characters" && <p style={{color: "red"}}>{changePasswordResponse}</p>}
-        {changePasswordResponse === "New password and confirm passwords do not match" && <p style={{color: "red"}}>{changePasswordResponse}</p>}
-        {changePasswordResponse === "Incorrect Password" && <p style={{color: "red"}}>{changePasswordResponse}</p>}
-        {changePasswordResponse === "Password Change Failed" && <p style={{color: "red"}}>{changePasswordResponse}</p>}
+        {changePasswordResponse && <p style={{color: "green"}}>{changePasswordResponse}</p>}
+        {changePasswordResponseError && <p style={{color: "red"}}>{changePasswordResponseError}</p>}
         <button>Click to change password</button>
       </form>
     </div>

@@ -42,21 +42,27 @@ mongoose.connect("mongodb+srv://" + dbUsername + ":" + dbPassword + "@cluster0.l
 // api to register a new user
 app.post('/register', async (req,res) =>{
 
+  const userName = req.body.username;
+  const userPassword = req.body.password;
+
   // check if all fields are filled
-  if (!req.body.username || !req.body.password) {
+  if (!userName || !userPassword) {
     return res.json({status: 'error', error: 'Please enter username and password'})
   }
 
   // check if password is between 8-16 characters
-  else if (req.body.password.length < 8 || req.body.password.length > 16) {
+  else if (userPassword.length < 8 || userPassword.length > 16) {
     return res.json({status: 'error', error: 'Password must be between 8 and 16 characters'})
+  }
+
+  else if (userPassword.search(/[0-9]/) < 0 || userPassword.search(/[a-z]/) < 0 || userPassword.search(/[A-Z]/) < 0 || userPassword.search(/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/) < 0){
+    res.json({status: 'error', error: 'Password must contain at least one number, one lowercase, one uppercase character, and one special character'})
   }
 
   // attempt to register user
   else{
     try{
-      const userName = req.body.username;
-      const hash = await bcrypt.hash(req.body.password, 10);
+      const hash = await bcrypt.hash(userPassword, 10);
       await UserModel.create({
       username: userName,
       password: hash
@@ -77,15 +83,14 @@ app.post('/register', async (req,res) =>{
 // api to login
 app.post('/login', async (req,res) =>{
 
-  
   try { 
-
     const userName = req.body.username;
+    const userPassword = req.body.password;
     const user = await UserModel.findOne({username: userName})
 
     // check if user exists
     if (user) {
-      bcrypt.compare(req.body.password, user.password, function(err, result) {
+      bcrypt.compare(userPassword, user.password, function(err, result) {
         if(err) {
           return res.json({status: 'error', error: 'Invalid username or password'})
         }
@@ -117,10 +122,11 @@ app.post('/login', async (req,res) =>{
 // api to send feedback
 app.post('/sendfeedback', async (req,res) =>{
 
-  // header for token
-  const token = req.headers["x-access-token"];
-
   try{
+    // header for token
+    const token = req.headers["x-access-token"];
+    const reqFeedback = req.body.feedbacktext;
+
     const decoded = jwt.verify(token, jwtTokenSecret);
     const username = decoded.username
     // find user
@@ -132,19 +138,19 @@ app.post('/sendfeedback', async (req,res) =>{
     }
 
     // check if feedback is empty
-    if (!req.body.feedbacktext) {
+    if (!reqFeedback) {
       return res.json({status: 'error', error: 'Cannot send empty feedback'})
     }
 
     // check if feedback is too long
-    if (req.body.feedbacktext.length >= 5000) {
+    if (reqFeedback.length >= 5000) {
       return res.json({status: 'error', error: 'Feedback must be less than 5000 characters'})
     }
 
     // attempt to create feedback in database
     await FeedbackModel.create({
       username: username,
-      feedback: req.body.feedbacktext
+      feedback: reqFeedback
     })
     res.json({status: 'ok'})
   }
@@ -172,6 +178,10 @@ app.post('/updatepassword', async (req,res) =>{
   // check if password is between 8-16 characters
   else if (newpassword.length < 8 || newpassword.length > 16) {
     return res.json({status: 'error', error: 'Password must be between 8-16 characters'})
+  }
+
+  else if (newpassword.search(/[0-9]/) < 0 || newpassword.search(/[a-z]/) < 0 || newpassword.search(/[A-Z]/) < 0 || newpassword.search(/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/) < 0){
+    res.json({status: 'error', error: 'Password must contain at least one number, one lowercase, one uppercase character, and one special character'})
   }
 
   // check if new password and confirm password match

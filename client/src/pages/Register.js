@@ -37,6 +37,10 @@ function App() {
       setPasswordError("Password must be between 8-16 characters");
     }
 
+    else if (password.search(/[0-9]/) < 0 || password.search(/[a-z]/) < 0 || password.search(/[A-Z]/) < 0 || password.search(/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/) < 0){
+      setPasswordError("Password must contain at least one number, one lowercase, one uppercase character, and one special character");
+    }
+
     // send request to server to register
     else{
       const response = await fetch("https://localhost:3001/register", {
@@ -68,6 +72,9 @@ function App() {
           setUsernameError(data.error);
         }
         else if(data.error === "Password must be between 8-16 characters"){
+          setPasswordError(data.error);
+        }
+        else if(data.error === "Password must contain at least one number, one lowercase, one uppercase character, and one special character"){
           setPasswordError(data.error);
         }
       }
